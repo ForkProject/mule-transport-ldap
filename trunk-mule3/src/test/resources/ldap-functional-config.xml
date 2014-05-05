@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:spring="http://www.springframework.org/schema/beans"
+xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:ldap="http://www.mulesoft.org/schema/mule/ldap/3.0"
+xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/3.0/mule.xsd http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/3.0/mule-vm.xsd http://www.mulesoft.org/schema/mule/ldap http://www.mulesoft.org/schema/mule/ldap/3.0/mule-ldap.xsd">
+    <vm:connector name="vmQueue"></vm:connector>
+    <custom-transformer name="LDAPSearchResultToString" class="org.mule.transport.ldap.transformers.LDAPSearchResultToString" />
+    <custom-transformer name="JavaBeanToModifyRequest" class="org.mule.transport.ldap.transformers.JavaBeanToModifyRequest" />
+    <custom-transformer name="StringToSearchRequest" class="org.mule.transport.ldap.transformers.StringToSearchRequest"></custom-transformer>
+    <model name="LDAPTest">
+        <service name="asyncSearchAndResultAsDSML">
+            <inbound>
+                <vm:inbound-endpoint path="test_in_async" responseTransformer-refs="LDAPSearchResultToString" />
+            </inbound>
+            <component class="org.mule.component.simple.EchoComponent" />
+            <outbound>
+                <pass-through-router>
+                    <outbound-endpoint synchronous="true" address="ldap://ldap.out">
+                        <transformer ref="StringToSearchRequest" />
+                    </outbound-endpoint>
+                </pass-through-router>
+            </outbound>
+        </service>
+        <service name="asyncJavaBean">
+            <inbound>
+                <vm:inbound-endpoint path="test_in_bean" />
+            </inbound>
+            <component class="org.mule.component.simple.EchoComponent" />
+            <outbound>
+                <pass-through-router>
+                    <outbound-endpoint synchronous="true" address="ldap://ldap.out">
+                        <transformer ref="JavaBeanToModifyRequest" />
+                    </outbound-endpoint>
+                </pass-through-router>
+            </outbound>
+        </service>
+    </model>
+</mule>

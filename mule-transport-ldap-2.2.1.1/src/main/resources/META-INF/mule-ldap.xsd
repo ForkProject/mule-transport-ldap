@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<xsd:schema xmlns="http://www.mulesource.org/schema/mule/ldap/2.2"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:mule="http://www.mulesource.org/schema/mule/core/2.2"
+        xmlns:schemadoc="http://www.mulesource.org/schema/mule/schemadoc/2.2"
+    targetNamespace="http://www.mulesource.org/schema/mule/ldap/2.2"
+    elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+    <xsd:import namespace="http://www.mulesource.org/schema/mule/core/2.2"
+        schemaLocation="http://www.mulesource.org/schema/mule/core/2.2/mule.xsd"/>
+    <xsd:import
+    	namespace="http://www.mulesource.org/schema/mule/schemadoc/2.2"
+    	schemaLocation="http://www.mulesource.org/schema/mule/schemadoc/2.2/mule-schemadoc.xsd" />
+
+    <xsd:annotation>
+            <xsd:documentation>The ldap transport allows data to be retrieved from and written to any database that supports a ldap driver. It also supports invoking stored precedures.  
+            </xsd:documentation>
+            <xsd:appinfo>
+                <schemadoc:short-name>ldap</schemadoc:short-name>
+                <schemadoc:page-title>ldap Transport</schemadoc:page-title>
+                <schemadoc:transport-features receiveEvents="true" dispatchEvents="true" responseEvents="true"
+    requestEvents="true"
+    transactions="true" streaming="false">
+                    <schemadoc:inboundMEPs in-only="true" in-optional-out="true" in-out="true"/>
+                    <schemadoc:outboundMEPs out-only="true" out-optional-in="true" out-in="true"/>
+                </schemadoc:transport-features>
+            </xsd:appinfo>
+    </xsd:annotation>
+
+    <xsd:element name="connector" type="ldapConnectorType" substitutionGroup="mule:abstract-connector"/>
+
+    <xsd:complexType name="ldapConnectorType">
+    	<xsd:annotation>
+    		<xsd:documentation>
+    			The ldap connector is used to configure the shared
+    			behavior for ldap endpoints that reference the
+    			connector. DataSources, Queries, and Polling Intervals
+    			are some of the key properties configured on the ldap
+    			connector.
+    		</xsd:documentation>
+    	</xsd:annotation>
+    	<xsd:complexContent>
+    		<xsd:extension base="mule:connectorType">
+    			<xsd:sequence>
+    				<xsd:element ref="abstract-query" minOccurs="0"
+    					maxOccurs="unbounded">
+    					<xsd:annotation>
+    						<xsd:documentation>
+    							Defines a set of queries. Each query has
+    							a key and a value (SQL statement).
+    							Queries are later referenced by key.
+    						</xsd:documentation>
+    					</xsd:annotation>
+    				</xsd:element>
+    				
+    			</xsd:sequence>
+    			<xsd:attribute name="ldapHost" use="required" type="xsd:string">
+    			</xsd:attribute>
+    			<xsd:attribute name="ldapPort" type="xsd:int"></xsd:attribute>
+    			
+    			<xsd:attribute name="searchScope" type="xsd:int"></xsd:attribute>
+    			<xsd:attribute name="dereference" type="xsd:int"></xsd:attribute>
+    			<xsd:attribute name="timeLimit" type="xsd:int"></xsd:attribute>
+    			<xsd:attribute name="maxResults" type="xsd:int"></xsd:attribute>
+    			<xsd:attribute name="psEventchangetype" type="xsd:int"></xsd:attribute>
+    			
+    			
+    			<xsd:attribute name="startUnsolicitedNotificationListener" type="xsd:boolean"></xsd:attribute>
+    			<xsd:attribute name="typesOnly" type="xsd:boolean"></xsd:attribute>
+    			<xsd:attribute name="doReferrals" type="xsd:boolean"></xsd:attribute>
+    			<xsd:attribute name="psChangeonly" type="xsd:boolean"></xsd:attribute>
+    			<xsd:attribute name="enablePersistentSearch" type="xsd:boolean"></xsd:attribute>
+    			
+    			
+    			
+    			
+    			<xsd:attribute name="loginDN" use="required" type="xsd:string"></xsd:attribute>
+    			<xsd:attribute name="password" type="xsd:string"></xsd:attribute>
+    			<xsd:attribute name="searchBase"  use="required" type="xsd:string"></xsd:attribute>
+    			
+    		    <xsd:attribute name="attributes" type="xsd:string"></xsd:attribute>
+    		    <xsd:attribute name="psFilters" type="xsd:string"></xsd:attribute>
+    		   
+    			
+    			
+    			
+    			
+    			
+    			
+    			
+    			<!-- 
+  
+
+    private List attributes = null; // attributes, default all
+  
+
+    private List < String > psFilters = null;
+
+ 
+    			
+    			 -->
+    			
+    			
+    			
+    			
+    		</xsd:extension>
+    	</xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:element name="inbound-endpoint" type="inboundEndpointType"
+    	substitutionGroup="mule:abstract-inbound-endpoint">
+    	<xsd:annotation>
+    		<xsd:documentation>
+    			Receives or fetches data from a database. You can
+    			reference SQL select statements or call stored
+    			procedures on inbound endpoints. Statements on the
+    			inbound endpoint get invoked periodically according to
+    			the pollingInterval. Statements that contain an insert,
+    			update, or delete are not allowed.
+    		</xsd:documentation>
+    	</xsd:annotation>
+    </xsd:element>
+    <xsd:complexType name="inboundEndpointType">
+        <xsd:complexContent>
+            <xsd:extension base="mule:inboundEndpointWithXaType">
+                <xsd:sequence>
+                    <xsd:element ref="abstract-query" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+                <xsd:attributeGroup ref="addressAttributes"/>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:element name="outbound-endpoint" type="outboundEndpointType"
+        substitutionGroup="mule:abstract-outbound-endpoint">
+        <xsd:annotation>
+            <xsd:documentation>
+                            You can reference any SQL statement or call a stored procedure on outbound endpoints. Statements on the outbound endpoint get invoked synchronously. SQL select statements or stored procedures may return output that is handled by the ResultSetHandler and then attached to the message as the payload.
+            </xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+    <xsd:complexType name="outboundEndpointType">
+        <xsd:complexContent>
+            <xsd:extension base="mule:outboundEndpointWithXaType">
+                <xsd:sequence>
+                    <xsd:element ref="abstract-query" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+                <xsd:attributeGroup ref="addressAttributes"/>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:element name="endpoint" type="globalEndpointType"
+        substitutionGroup="mule:abstract-global-endpoint"/>
+    <xsd:complexType name="globalEndpointType">
+        <xsd:complexContent>
+            <xsd:extension base="mule:globalEndpointWithXaType">
+                <xsd:sequence>
+                    <xsd:element ref="abstract-query" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+                <xsd:attributeGroup ref="addressAttributes"/>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <!-- Define a type hierarchy so that the EE transport can re-define the "query" element. -->
+    <xsd:element name="abstract-query" abstract="true" type="abstractQueryType"/>
+    <xsd:complexType name="abstractQueryType">
+        <xsd:complexContent>
+            <xsd:extension base="mule:keyValueType"/>
+        </xsd:complexContent>
+    </xsd:complexType>
+    
+    <xsd:element name="query" type="queryType" substitutionGroup="abstract-query">
+        <xsd:annotation>
+            <xsd:documentation>Assigns a name (key) to a query (value). Queries
+                are then referenced by key, such as ldap://myQuery for
+                <![CDATA[<ldap:query key="myQuery" value="select * from table"/>]]>
+                </xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+    <xsd:complexType name="queryType">
+        <xsd:complexContent>
+            <xsd:extension base="abstractQueryType"/>
+        </xsd:complexContent>
+    </xsd:complexType>
+    
+    <xsd:attributeGroup name="addressAttributes">
+        <xsd:attribute name="queryKey" type="xsd:string"/>
+        <xsd:attribute name="pollingFrequency" type="mule:substitutableLong"/>
+    </xsd:attributeGroup>
+
+
+    <!--  org.mule.transport.ldap.transformers.LDAPEntryToAddRequest
+        
+        org.mule.transport.ldap.transformers.LDAPMessageToString 	String means: DSML or LDIF
+        org.mule.transport.ldap.transformers.LDAPSearchResultToString 	String means: DSML or LDIF
+        org.mule.transport.ldap.transformers.StringToDeleteRequest 	String means: dn
+        org.mule.transport.ldap.transformers.StringToLDAPMessage 	String means: DSML or LDIF
+        org.mule.transport.ldap.transformers.StringToSearchRequest 	String means: filter query
+        org.mule.transport.ldap.transformers.JavaBeanToModiffyRequest  -->
+
+
+    <xsd:element name="ldapentry-to-ldapaddrequest-transformer" type="mule:abstractTransformerType" substitutionGroup="mule:abstract-transformer"/>
+    <xsd:element name="ldapmessage-to-string-transformer" type="formatTransformerType" substitutionGroup="mule:abstract-transformer"/>
+  
+    <xsd:complexType name="formatTransformerType">
+    
+        <xsd:complexContent>
+            <xsd:extension base="mule:abstractTransformerType">
+                <xsd:attribute name="format">
+                	<xsd:simpleType>
+                		<xsd:restriction base="xsd:string">
+                			<xsd:enumeration value="LDIF"></xsd:enumeration>
+                			<xsd:enumeration value="DSML"></xsd:enumeration>
+                		</xsd:restriction>
+                	</xsd:simpleType>
+                </xsd:attribute>
+
+
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+
+
+</xsd:schema>

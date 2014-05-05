@@ -1,0 +1,6 @@
+.classpath
+.settings/
+todo.txt
+.DS_*
+.project
+*.sh

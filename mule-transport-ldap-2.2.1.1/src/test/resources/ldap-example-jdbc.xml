@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mule
+	xmlns="http://www.mulesource.org/schema/mule/core/2.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:spring="http://www.springframework.org/schema/beans"
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:ldap="http://www.mulesource.org/schema/mule/ldap/2.2"
+	xmlns:jdbc="http://www.mulesource.org/schema/mule/jdbc/2.2"
+	xmlns:vm="http://www.mulesource.org/schema/mule/vm/2.2"
+	xmlns:stdio="http://www.mulesource.org/schema/mule/stdio/2.2"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+    http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-2.5.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd
+    http://www.mulesource.org/schema/mule/core/2.2 http://www.mulesource.org/schema/mule/core/2.2/mule.xsd
+    http://www.mulesource.org/schema/mule/ldap/2.2 http://www.mulesource.org/schema/mule/ldap/2.2/mule-ldap.xsd
+    http://www.mulesource.org/schema/mule/jdbc/2.2 http://www.mulesource.org/schema/mule/jdbc/2.2/mule-jdbc.xsd
+    http://www.mulesource.org/schema/mule/vm/2.2  http://www.mulesource.org/schema/mule/vm/2.2/mule-vm.xsd
+    http://www.mulesource.org/schema/mule/stdio/2.2  http://www.mulesource.org/schema/mule/stdio/2.2/mule-stdio.xsd">
+
+	<ldap:connector
+		name="ldapConnector"
+		ldapHost="localhost"
+		ldapPort="10389"
+		loginDN="uid=admin,ou=system"
+		password="secret"
+		searchBase="ou=system"
+		enablePersistentSearch="true"
+		startUnsolicitedNotificationListener="true"
+		psChangeonly="true"
+		psFilters="cn=*" />
+
+	<ldap:connector
+		name="ldapConnector2"
+		ldapHost="localhost"
+		ldapPort="10389"
+		loginDN="uid=admin,ou=system"
+		password="secret"
+		searchBase="ou=system" />
+
+	<spring:bean
+		id="jdbcDataSource"
+		class="org.enhydra.jdbc.standard.StandardDataSource"
+		destroy-method="shutdown">
+		<spring:property
+			name="driverName"
+			value="org.apache.derby.jdbc.EmbeddedDriver" />
+		<spring:property
+			name="url"
+			value="jdbc:derby:muleEmbeddedDB;create=true" />
+	</spring:bean>
+
+	<jdbc:connector
+		name="jdbcConnector"
+		pollingFrequency="1000"
+		dataSource-ref="jdbcDataSource">
+
+		<jdbc:query
+			key="writeCn"
+			value="INSERT INTO TEST(TYPE, DATA) VALUES(1,#[groovy:payload.entry.getAttribute('sn').stringValue])" />
+
+	</jdbc:connector>
+
+
+	<endpoint
+		name="fetch"
+		address="ldap://ldap.out/(cn=*)" />
+
+	<expression-transformer name="expTrans">
+		<return-argument
+			evaluator="groovy"
+			expression="payload.next().getAttribute('cn').stringValue" />
+	</expression-transformer>
+
+	<byte-array-to-string-transformer name="ObjectArrayToString" />
+
+
+
+	<model name="Test">
+
+
+		<default-service-exception-strategy>
+			<outbound-endpoint address="stdio://System.out" />
+		</default-service-exception-strategy>
+
+		<service name="Ldap2Jdbc">
+
+			<inbound>
+				<ldap:inbound-endpoint
+					name="testldapEndpointIn"
+					address="ldap://ldap.in"
+					connector-ref="ldapConnector" />
+			</inbound>
+
+			<outbound>
+
+
+				<filtering-router>
+
+					<jdbc:outbound-endpoint queryKey="writeCn" />
+
+					<payload-type-filter
+						expectedType="com.novell.ldap.events.SearchResultEvent" />
+
+				</filtering-router>
+				<logging-catch-all-strategy />
+
+			</outbound>
+
+		</service>
+
+
+		<service name="VM2Ldap">
+
+			<inbound>
+				<inbound-endpoint
+					address="vm://vmldapsearch"
+					synchronous="true" />
+			</inbound>
+			<echo-component></echo-component>
+			<outbound>
+
+				<pass-through-router>
+
+					<outbound-endpoint
+						synchronous="true"
+						ref="fetch"
+						connector-ref="ldapConnector2" />
+				</pass-through-router>
+
+			</outbound>
+
+		</service>
+
+		<service name="VM2Sysout">
+
+
+
+
+			<inbound>
+				<inbound-endpoint
+					address="vm://vmsys"
+					synchronous="true" />
+			</inbound>
+			<echo-component></echo-component>
+			<outbound>
+
+
+				<pass-through-router>
+
+					<outbound-endpoint
+						transformer-refs="expTrans ObjectArrayToString"
+						synchronous="true"
+						address="stdio://System.out" />
+				</pass-through-router>
+
+			</outbound>
+
+		</service>
+
+		<service name="process">
+
+			<inbound>
+				<inbound-endpoint
+					synchronous="true"
+					address="vm://vmprocess" />
+			</inbound>
+			<echo-component></echo-component>
+			<outbound>
+				<chaining-router>
+
+					<outbound-endpoint
+						synchronous="true"
+						address="vm://vmldapsearch" />
+					<outbound-endpoint
+						synchronous="true"
+						address="vm://vmsys" />
+
+				</chaining-router>
+
+
+			</outbound>
+
+		</service>
+
+
+	</model>
+
+
+
+</mule>

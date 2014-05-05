@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesource.org/schema/mule/core/2.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:spring="http://www.springframework.org/schema/beans"
+	xmlns:vm="http://www.mulesource.org/schema/mule/vm/2.2"
+	xsi:schemaLocation="
+             http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.mulesource.org/schema/mule/core/2.2 http://www.mulesource.org/schema/mule/core/2.2/mule.xsd
+       http://www.mulesource.org/schema/mule/vm/2.2 http://www.mulesource.org/schema/mule/vm/2.2/mule-vm.xsd">
+
+	<model name="LDAPTest">
+
+		<!-- Lauscht der response router immer?? -->
+
+
+		<service name="response-router-1">
+			<inbound>
+				<vm:inbound-endpoint path="test_in" />
+			</inbound>
+			<component class="org.mule.component.simple.EchoComponent" />
+			<outbound>
+				<pass-through-router>
+					<outbound-endpoint
+						address="ldap://ldap.out/(cn=test-cn*)">
+					</outbound-endpoint>
+
+					<reply-to address="ldap://ldap.in" />
+
+				</pass-through-router>
+
+
+
+			</outbound>
+			<async-reply failOnTimeout="true" timeout="15000">
+				<inbound-endpoint address="ldap://ldap.in"
+					>
+				</inbound-endpoint>
+				<custom-async-reply-router
+					class="org.mule.transport.ldap.routers.LdapResponseCorrelationAggregator" />
+			</async-reply>
+
+
+		</service>
+
+
+
+
+
+	</model>
+</mule>
